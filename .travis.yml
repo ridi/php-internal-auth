@@ -1,0 +1,12 @@
+language: php
+php:
+  - 7.1.3
+
+install:
+  - make install
+
+before_script:
+  - make update
+
+script:
+  - make test
