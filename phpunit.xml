@@ -6,7 +6,6 @@
     <testsuites>
         <testsuite name="Test Suite">
             <directory>./tests</directory>
-            <exclude>./tests/Symfony</exclude>
         </testsuite>
     </testsuites>
 

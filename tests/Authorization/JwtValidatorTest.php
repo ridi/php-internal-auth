@@ -1,20 +1,20 @@
 <?php
 declare(strict_types=1);
 
-namespace Ridibooks\Test\OAuth2\Authorization;
+namespace Ridibooks\Test\InternalAuth\Authorization;
 
 use PHPUnit\Framework\TestCase;
-use Ridibooks\OAuth2\Authorization\Exception\ExpiredTokenException;
-use Ridibooks\OAuth2\Authorization\Exception\InvalidJwtException;
-use Ridibooks\OAuth2\Authorization\Exception\TokenNotFoundException;
-use Ridibooks\OAuth2\Authorization\Token\JwtToken;
-use Ridibooks\OAuth2\Authorization\Validator\JwtTokenValidator;
+use Ridibooks\InternalAuth\Authorization\Exception\ExpiredTokenException;
+use Ridibooks\InternalAuth\Authorization\Exception\InvalidJwtException;
+use Ridibooks\InternalAuth\Authorization\Exception\TokenNotFoundException;
+use Ridibooks\InternalAuth\Authorization\Token\JwtToken;
+use Ridibooks\InternalAuth\Authorization\Validator\JwtValidator;
 use Ridibooks\Test\OAuth2\Common\TokenConstant;
 use Ridibooks\Test\OAuth2\Api\MockJwkApi;
 
-final class TokenValidatorTest extends TestCase
+final class JwtValidatorTest extends TestCase
 {
-    private $jwk_url = 'https://account.dev.ridi.io/oauth2/keys/public';
+    private $jwk_url = 'https://account-cdn.dev.ridi.io/internal-auth';
 
     protected function setUp()
     {
@@ -28,13 +28,13 @@ final class TokenValidatorTest extends TestCase
 
     private function validate($access_token)
     {
-        $jwtTokenValidator = new JwtTokenValidator($this->jwk_url);
+        $jwtTokenValidator = new JwtValidator($this->jwk_url);
         return $jwtTokenValidator->validateToken($access_token);
     }
 
     private function validateWithKid($access_token)
     {
-        $jwtTokenValidator = new JwtTokenValidator($this->jwk_url);
+        $jwtTokenValidator = new JwtValidator($this->jwk_url);
         return $jwtTokenValidator->validateToken($access_token);
     }
 
