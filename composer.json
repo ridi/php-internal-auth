@@ -26,6 +26,9 @@
         "mockery/mockery": "^1.3"
     },
     "suggest": {
+        "silex/silex": "Required when using `Ridibooks\\InternalAuth\\Silex\\Provider\\Authorizer`(compatible with 1.3.x versions)",
+        "symfony/symfony": "Required when using `Ridibooks\\InternalAuth\\Authorization\\Authorizer`(compatible with 4.x.x versions)",
+        "guzzlehttp/guzzle": "Required when using `Ridibooks\\InternalAuth\\Authorization\\Authorizer`"
     },
     "config": {
         "platform": {
