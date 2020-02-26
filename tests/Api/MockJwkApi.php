@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Ridibooks\Test\OAuth2\Api;
+namespace Ridibooks\Test\InternalAuth\Api;
 
 use Mockery;
 
