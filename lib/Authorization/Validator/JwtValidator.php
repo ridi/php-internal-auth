@@ -87,7 +87,7 @@ class JwtValidator
      * @return JWS
      * @throws InvalidJwtException
      */
-    public function getJws(string $internal_auth_token): JWS
+    private function getJws(string $internal_auth_token): JWS
     {
         try {
             return $this->serializer_manager->unserialize($internal_auth_token);
@@ -101,7 +101,7 @@ class JwtValidator
      * @return array
      * @throws InvalidJwtException
      */
-    public function checkAndGetHeader(JWS $jws): array
+    private function checkAndGetHeader(JWS $jws): array
     {
         try {
             $this->header_checker_manager->check($jws, SIGNATURE_INDEX, ['alg', 'typ', 'kid']);
@@ -118,7 +118,7 @@ class JwtValidator
      * @throws ExpiredTokenException
      * @throws InvalidJwtException
      */
-    public function checkAndGetClaims(JWS $jws): array
+    private function checkAndGetClaims(JWS $jws): array
     {
         $claims = json_decode($jws->getPayload(), true);
         try {
