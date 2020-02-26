@@ -21,7 +21,7 @@ class JwtGeneratorTest extends TestCase
     protected function setUp()
     {
         $this->jwt_generator = new JwtGenerator([
-            $this->test_issuer => [
+            KeyConstant::TEST_ISSUER => [
                 'kid' => KeyConstant::TEST_KEY_ID,
                 'key' => file_get_contents(KeyConstant::KEY_FILE),
             ]
