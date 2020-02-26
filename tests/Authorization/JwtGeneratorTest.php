@@ -8,7 +8,7 @@ use PHPUnit\Framework\TestCase;
 use Ridibooks\InternalAuth\Authorization\Generator\JwtGenerator;
 use Ridibooks\InternalAuth\Authorization\Validator\JwtValidator;
 use Ridibooks\Test\InternalAuth\Api\MockJwkApi;
-use Ridibooks\Test\InternalAuth\Common\TokenConstant;
+use Ridibooks\Test\InternalAuth\Common\KeyConstant;
 
 class JwtGeneratorTest extends TestCase
 {
@@ -18,19 +18,16 @@ class JwtGeneratorTest extends TestCase
     /** @var JwtValidator */
     private $jwt_validator;
 
-    private $test_issuer = 'test-service';
-    private $test_audience = 'test-audience';
-
     protected function setUp()
     {
         $this->jwt_generator = new JwtGenerator([
             $this->test_issuer => [
-                'kid' => TokenConstant::TEST_KEY_ID,
-                'key' => file_get_contents(TokenConstant::KEY_FILE),
+                'kid' => KeyConstant::TEST_KEY_ID,
+                'key' => file_get_contents(KeyConstant::KEY_FILE),
             ]
         ]);
 
-        $this->jwt_validator = new JwtValidator(TokenConstant::JWK_URL);
+        $this->jwt_validator = new JwtValidator(KeyConstant::JWK_URL);
         MockJwkApi::setUp();
     }
 
@@ -42,11 +39,11 @@ class JwtGeneratorTest extends TestCase
 
     function testGenerateJwt()
     {
-        $token = $this->jwt_generator->generate($this->test_issuer, $this->test_audience);
+        $token = $this->jwt_generator->generate(KeyConstant::TEST_ISSUER, KeyConstant::TEST_AUDIENCE);
         $validated_token = $this->jwt_validator->validateToken($token);
 
-        $this->assertEquals($this->test_issuer, $validated_token->getIssuer());
-        $this->assertEquals($this->test_audience, $validated_token->getAudience());
-        $this->assertEquals(TokenConstant::TEST_KEY_ID, $validated_token->getKeyId());
+        $this->assertEquals(KeyConstant::TEST_ISSUER, $validated_token->getIssuer());
+        $this->assertEquals(KeyConstant::TEST_AUDIENCE, $validated_token->getAudience());
+        $this->assertEquals(KeyConstant::TEST_KEY_ID, $validated_token->getKeyId());
     }
 }

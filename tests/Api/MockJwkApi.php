@@ -3,7 +3,7 @@
 namespace Ridibooks\Test\InternalAuth\Api;
 
 use Mockery;
-use Ridibooks\Test\InternalAuth\Common\TokenConstant;
+use Ridibooks\Test\InternalAuth\Common\KeyConstant;
 
 class MockJwkApi
 {
@@ -11,7 +11,7 @@ class MockJwkApi
     {
         return array(
             "key" => array(
-                "kid" => TokenConstant::TEST_KEY_ID,
+                "kid" => KeyConstant::TEST_KEY_ID,
                 "alg" => "RS256",
                 "kty" => "RSA",
                 "use" => "sig",
