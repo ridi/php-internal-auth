@@ -25,7 +25,7 @@
 //    {
 //        MockJwkApi::tearDown();
 //    }
-//
+
 //    private function validate($access_token)
 //    {
 //        $jwtTokenValidator = new JwtValidator($this->jwk_url);
