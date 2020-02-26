@@ -21,8 +21,6 @@ class JwtGeneratorTest extends TestCase
     private $test_issuer = 'test-service';
     private $test_audience = 'test-audience';
 
-    private $jwk_url = 'https://account-cdn.dev.ridi.io/internal-auth';
-
     protected function setUp()
     {
         $this->jwt_generator = new JwtGenerator([
@@ -32,7 +30,7 @@ class JwtGeneratorTest extends TestCase
             ]
         ]);
 
-        $this->jwt_validator = new JwtValidator($this->jwk_url);
+        $this->jwt_validator = new JwtValidator(TokenConstant::JWK_URL);
         MockJwkApi::setUp();
     }
 
