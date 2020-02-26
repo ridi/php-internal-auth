@@ -1,19 +1,19 @@
 <?php declare(strict_types=1);
 
-namespace Ridibooks\OAuth2\Authorization\Validator;
+namespace Ridibooks\InternalAuth\Authorization\Validator;
 
 use Psr\Cache\CacheException;
-use Ridibooks\OAuth2\Authorization\Exception\AccountServerException;
-use Ridibooks\OAuth2\Authorization\Exception\AuthorizationException;
-use Ridibooks\OAuth2\Authorization\Exception\ClientRequestException;
-use Ridibooks\OAuth2\Authorization\Exception\ExpiredTokenException;
-use Ridibooks\OAuth2\Authorization\Exception\InvalidJwtException;
-use Ridibooks\OAuth2\Authorization\Exception\InvalidJwtSignatureException;
-use Ridibooks\OAuth2\Authorization\Exception\InvalidPublicKeyException;
-use Ridibooks\OAuth2\Authorization\Exception\NotExistedKeyException;
-use Ridibooks\OAuth2\Authorization\Exception\TokenNotFoundException;
-use Ridibooks\OAuth2\Authorization\Token\JwtToken;
-use Ridibooks\OAuth2\Authorization\Jwk\JwkHandler;
+use Ridibooks\InternalAuth\Authorization\Exception\AccountServerException;
+use Ridibooks\InternalAuth\Authorization\Exception\AuthorizationException;
+use Ridibooks\InternalAuth\Authorization\Exception\ClientRequestException;
+use Ridibooks\InternalAuth\Authorization\Exception\ExpiredTokenException;
+use Ridibooks\InternalAuth\Authorization\Exception\InvalidJwtException;
+use Ridibooks\InternalAuth\Authorization\Exception\InvalidJwtSignatureException;
+use Ridibooks\InternalAuth\Authorization\Exception\InvalidPublicKeyException;
+use Ridibooks\InternalAuth\Authorization\Exception\NotExistedKeyException;
+use Ridibooks\InternalAuth\Authorization\Exception\TokenNotFoundException;
+use Ridibooks\InternalAuth\Authorization\Token\JwtToken;
+use Ridibooks\InternalAuth\Authorization\Jwk\JwkHandler;
 use Jose\Component\Signature\Serializer\JWSSerializerManager;
 use Jose\Component\Signature\Serializer\CompactSerializer;
 use Jose\Component\Signature\Algorithm\RS256;
@@ -29,7 +29,7 @@ use Psr\Cache\CacheItemPoolInterface;
 
 const SIGNATURE_INDEX = 0;
 
-class JwtTokenValidator
+class JwtValidator
 {
     /** @var JwkHandler */
     private $jwk_handler;
@@ -83,14 +83,14 @@ class JwtTokenValidator
     }
 
     /**
-     * @param string $access_token
+     * @param string $internal_auth_token
      * @return JWS
      * @throws InvalidJwtException
      */
-    private function getJws(string $access_token): JWS
+    private function getJws(string $internal_auth_token): JWS
     {
         try {
-            return $this->serializer_manager->unserialize($access_token);
+            return $this->serializer_manager->unserialize($internal_auth_token);
         } catch (InvalidArgumentException $e) {
             throw new InvalidJwtException($e->getMessage());
         }
@@ -122,7 +122,7 @@ class JwtTokenValidator
     {
         $claims = json_decode($jws->getPayload(), true);
         try {
-            $this->claim_checker_manager->check($claims, ['sub', 'u_idx', 'exp', 'client_id']);
+            $this->claim_checker_manager->check($claims, ['iss', 'aud', 'exp']);
         } catch (Checker\InvalidClaimException $e) {
             throw new ExpiredTokenException($e->getMessage());
         } catch (Checker\MissingMandatoryClaimException $e) {
@@ -153,7 +153,7 @@ class JwtTokenValidator
     }
 
     /**
-     * @param string|null $access_token
+     * @param string|null $internal_auth_token
      * @return JwtToken
      * @throws AuthorizationException
      * @throws TokenNotFoundException
@@ -164,18 +164,18 @@ class JwtTokenValidator
      * @throws ClientRequestException
      * @throws CacheException
      */
-    public function validateToken($access_token): JwtToken
+    public function validateToken($internal_auth_token): JwtToken
     {
-        if (!isset($access_token)) {
+        if (!isset($internal_auth_token)) {
             throw new TokenNotFoundException();
         }
 
-        $jws = $this->getJws($access_token);
+        $jws = $this->getJws($internal_auth_token);
 
         $header = $this->checkAndGetHeader($jws);
         $claims = $this->checkAndGetClaims($jws);
 
-        $jwk = $this->jwk_handler->getJwk($claims['client_id'], $header['kid']);
+        $jwk = $this->jwk_handler->getJwk($claims['iss'], $header['kid']);
         $this->verifyJwsWithJwk($jws, $jwk);
 
         return JwtToken::createFrom($claims);

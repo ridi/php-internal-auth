@@ -1,5 +1,5 @@
 <?php
-namespace Ridibooks\OAuth2\Authorization\Exception;
+namespace Ridibooks\InternalAuth\Authorization\Exception;
 
 class TokenNotFoundException extends AuthorizationException
 {

@@ -1,32 +1,41 @@
 <?php declare(strict_types=1);
 
-namespace Ridibooks\OAuth2\Authorization\Api;
+namespace Ridibooks\InternalAuth\Authorization\Api;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Response;
-use Ridibooks\OAuth2\Authorization\Exception\AccountServerException;
-use Ridibooks\OAuth2\Authorization\Exception\ClientRequestException;
+use Ridibooks\InternalAuth\Authorization\Exception\AccountServerException;
+use Ridibooks\InternalAuth\Authorization\Exception\ClientRequestException;
 
 class JwkApi
 {
     /**
      * @param string $jwk_url
-     * @param string $client_id
+     * @param string $service_name
+     * @param string $kid
      * @return array
      * @throws AccountServerException
      * @throws ClientRequestException
      */
     public static function requestPublicKey(
         string $jwk_url,
-        string $client_id
+        string $service_name,
+        string $kid
     ): array
     {
         $client = new Client();
-        $response = $client->request('GET', $jwk_url, [
-            'query' => ['client_id' => $client_id]
-        ]);
-
+        $response = $client->request('GET', $jwk_url . self::makePath($service_name, $kid));
         return self::processResponse($response);
+    }
+
+    /**
+     * @param string $service_name
+     * @param string $kid
+     * @return string
+     */
+    private static function makePath(string $service_name, string $kid): string
+    {
+        return "/$service_name/$kid";
     }
 
     /**

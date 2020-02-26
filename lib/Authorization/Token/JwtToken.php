@@ -1,17 +1,13 @@
 <?php declare(strict_types=1);
 
-namespace Ridibooks\OAuth2\Authorization\Token;
+namespace Ridibooks\InternalAuth\Authorization\Token;
 
-use Ridibooks\OAuth2\Authorization\Exception\InvalidTokenException;
-use Ridibooks\OAuth2\Authorization\Validator\ScopeChecker;
-use Ridibooks\OAuth2\Constant\ScopeConstant;
+use Ridibooks\InternalAuth\Authorization\Exception\InvalidTokenException;
+use Ridibooks\InternalAuth\Authorization\Validator\ScopeChecker;
+use Ridibooks\InternalAuth\Constant\ScopeConstant;
 
 class JwtToken
 {
-    /**
-     * @var string
-     */
-    protected $subject;
     /**
      * @var int
      */
@@ -21,41 +17,32 @@ class JwtToken
      */
     protected $expire_date;
     /**
-     * @var array
+     * @var string
      */
-    protected $scopes;
-    /**
-     * @var int
-     */
-    protected $u_idx;
+    protected $issuer;
     /**
      * @var string
      */
-    protected $client_id;
+    protected $audience;
 
     /**
      * BaseTokenInfo constructor.
      *
-     * @param string $subject
+     * @param string $issuer
+     * @param string $audience
      * @param int $expire_timestamp
-     * @param int $u_idx
-     * @param string $client_id
-     * @param array $scopes
      */
     protected function __construct(
-        string $subject,
-        int $expire_timestamp,
-        int $u_idx,
-        string $client_id,
-        array $scopes
+        string $issuer,
+        string $audience,
+        int $expire_timestamp
     )
     {
-        $this->subject = $subject;
+        $this->issuer = $issuer;
+        $this->audience = $audience;
+
         $this->expire_timestamp = $expire_timestamp;
         $this->expire_date = (new \DateTime())->setTimestamp($expire_timestamp);
-        $this->u_idx = $u_idx;
-        $this->client_id = $client_id;
-        $this->scopes = $scopes;
     }
 
     /**
@@ -65,24 +52,14 @@ class JwtToken
      */
     public static function createFrom(array $token): JwtToken
     {
-        if (!isset($token['sub'], $token['exp'], $token['u_idx'], $token['client_id'], $token['scope'])) {
+        if (!isset($token['iss'], $token['aud'], $token['exp'])) {
             throw new InvalidTokenException();
         }
         return new self(
-            $token['sub'],
-            $token['exp'],
-            $token['u_idx'],
-            $token['client_id'],
-            explode(ScopeConstant::DEFAULT_SCOPE_DELIMITER, $token['scope'])
+            $token['iss'],
+            $token['aud'],
+            $token['exp']
         );
-    }
-
-    /**
-     * @return string
-     */
-    public function getSubject(): string
-    {
-        return $this->subject;
     }
 
     /**
@@ -101,36 +78,18 @@ class JwtToken
         return $this->expire_date;
     }
 
-    /**
-     * @return int
-     */
-    public function getUIdx(): int
+    public function getIssuer(): string
     {
-        return $this->u_idx;
+        return $this->issuer;
     }
 
-    /**
-     * @return string
-     */
-    public function getClientId(): string
+    public function getAudience(): string
     {
-        return $this->client_id;
+        return $this->audience;
     }
 
-    /**
-     * @return array
-     */
-    public function getScopes(): array
+    public function isAllowed(array $issuers): bool
     {
-        return $this->scopes;
-    }
-
-    /**
-     * @param array $scopes
-     * @return bool
-     */
-    public function hasScopes(array $scopes): bool
-    {
-        return ScopeChecker::every($scopes, $this->getScopes());
+        return in_array($this->getIssuer(), $issuers);
     }
 }

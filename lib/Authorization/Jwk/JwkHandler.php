@@ -1,15 +1,15 @@
 <?php declare(strict_types=1);
 
-namespace Ridibooks\OAuth2\Authorization\Jwk;
+namespace Ridibooks\InternalAuth\Authorization\Jwk;
 
-use Ridibooks\OAuth2\Authorization\Exception\AccountServerException;
-use Ridibooks\OAuth2\Authorization\Exception\ClientRequestException;
-use Ridibooks\OAuth2\Authorization\Exception\InvalidJwtException;
-use Ridibooks\OAuth2\Authorization\Exception\InvalidPublicKeyException;
-use Ridibooks\OAuth2\Authorization\Exception\NotExistedKeyException;
-use Ridibooks\OAuth2\Constant\JwkConstant;
+use Ridibooks\InternalAuth\Authorization\Exception\AccountServerException;
+use Ridibooks\InternalAuth\Authorization\Exception\ClientRequestException;
+use Ridibooks\InternalAuth\Authorization\Exception\InvalidJwtException;
+use Ridibooks\InternalAuth\Authorization\Exception\InvalidPublicKeyException;
+use Ridibooks\InternalAuth\Authorization\Exception\NotExistedKeyException;
+use Ridibooks\InternalAuth\Constant\JwkConstant;
 use Jose\Component\Core\JWK;
-use Ridibooks\OAuth2\Authorization\Api\JwkApi;
+use Ridibooks\InternalAuth\Authorization\Api\JwkApi;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Cache\CacheException;
 
@@ -33,7 +33,7 @@ class JwkHandler
     }
 
     /**
-     * @param string $client_id
+     * @param string $service_name
      * @param string $kid
      * @return JWK
      * @throws InvalidJwtException
@@ -44,13 +44,13 @@ class JwkHandler
      * @throws CacheException
      */
     public function getJwk(
-        string $client_id,
+        string $service_name,
         string $kid
     ): JWK
     {
-        $jwk = !is_null($this->cache_item_pool) ? $this->getJwkFromCachePool($kid, $client_id) : null;
+        $jwk = !is_null($this->cache_item_pool) ? $this->getJwkFromCachePool($service_name, $kid) : null;
         if (is_null($jwk)) {
-            $jwk = $this->getJwkFromApiAndMemorizeJwks($client_id, $kid);
+            $jwk = $this->getJwkFromApiAndMemorizeJwks($service_name, $kid);
         }
 
         $this->assertValidKey($jwk);
@@ -59,37 +59,17 @@ class JwkHandler
     }
 
     /**
+     * @param string $service_name
      * @param string $kid
-     * @param string $client_id
      * @return JWK|null
      * @throws InvalidJwtException
      * @throws CacheException
      */
-    protected function getJwkFromCachePool(string $kid, string $client_id): ?JWK
+    protected function getJwkFromCachePool(string $service_name, string $kid): ?JWK
     {
-        $cached_jwks = $this->cache_item_pool->getItem($client_id);
-
-        return $this->getJwkFromJwks($cached_jwks->get(), $kid);
-    }
-
-    /**
-     * @param array|null $jwks
-     * @param string $kid
-     * @return JWK|null
-     * @throws InvalidJwtException
-     */
-    protected function getJwkFromJwks(
-        ?array $jwks,
-        string $kid
-    ): ?JWK
-    {
-        if (is_null($jwks)) {
-            return null;
-        }
-        if (!array_key_exists($kid, $jwks)) {
-            throw new InvalidJwtException("No matched JWK in registered JWKSet");
-        }
-        return JWK::createFromJson(json_encode($jwks[$kid]));
+        $cache_key = $this->makeCacheKey($service_name, $kid);
+        $cached_jwk = $this->cache_item_pool->getItem($cache_key);
+        return $this->toJwk($cached_jwk->get());
     }
 
     /**
@@ -111,7 +91,7 @@ class JwkHandler
     }
 
     /**
-     * @param string $client_id
+     * @param string $service_name
      * @param string $kid
      * @return JWK
      * @throws AccountServerException
@@ -120,70 +100,72 @@ class JwkHandler
      * @throws CacheException
      */
     protected function getJwkFromApiAndMemorizeJwks(
-        string $client_id,
+        string $service_name,
         string $kid
     ): JWK
     {
-        $jwk_array = $this->getJwkArrayFromJwkApi($client_id);
-        $jwks = $this->getJwksFromJwkArray($client_id, $jwk_array);
-        $this->setJwksToCachePool($client_id, $jwks);
-        return $this->getJwkFromJwks($jwks, $kid);
+        $jwk = $this->getJwkArrayFromJwkApi($service_name, $kid);
+        $this->setJwkToCachePool($service_name, $kid, $jwk);
+        return $this->toJwk($jwk);
     }
 
     /**
-     * @param string $client_id
+     * @param string $service_name
+     * @param string $kid
      * @return array
      * @throws AccountServerException
      * @throws ClientRequestException
      */
     protected function getJwkArrayFromJwkApi(
-        string $client_id
+        string $service_name,
+        string $kid
     ): array
     {
-        return JwkApi::requestPublicKey($this->jwk_url, $client_id)[JwkConstant::KEYS];
+        return JwkApi::requestPublicKey($this->jwk_url, $service_name, $kid)[JwkConstant::RESPONSE_KEY];
     }
 
     /**
-     * @param string $client_id
-     * @param array $jwk_array
-     * @return array
-     * @throws CacheException
-     */
-    protected function getJwksFromJwkArray(
-        string $client_id,
-        array $jwk_array
-    ): array
-    {
-        $jwks = [];
-        if (!empty($this->cache_item_pool)) {
-            $cached_jwks = $this->cache_item_pool->getItem($client_id)->get();
-            $jwks = !is_null($cached_jwks) ? $cached_jwks : [];
-        }
-
-        foreach ($jwk_array as $jwk) {
-            $jwks[$jwk[JwkConstant::KID]] = $jwk;
-        }
-
-        return $jwks;
-    }
-
-    /**
-     * @param string $client_id
-     * @param array $jwks
+     * @param string $service_name
+     * @param string $kid
+     * @param array $jwk
      * @return void
      * @throws CacheException
      */
-    protected function setJwksToCachePool(
-        string $client_id,
-        array $jwks
+    protected function setJwkToCachePool(
+        string $service_name,
+        string $kid,
+        array $jwk
     ): void
     {
         if (empty($this->cache_item_pool)) {
             return;
         }
-        $cache_item = $this->cache_item_pool->getItem($client_id);
-        $cache_item->set($jwks);
+
+        $cache_key = $this->makeCacheKey($service_name, $kid);
+
+        $cache_item = $this->cache_item_pool->getItem($cache_key);
+        $cache_item->set($jwk);
         $cache_item->expiresAfter(JwkConstant::JWK_EXPIRATION_SEC);
         $this->cache_item_pool->save($cache_item);
+    }
+
+    protected function makeCacheKey(string $service_name, string $kid): string
+    {
+        return $service_name . ':' . $kid;
+    }
+
+    /**
+     * @param array|null $jwk
+     * @return JWK|null
+     */
+    protected function toJwk(
+        ?array $jwk
+    ): ?JWK
+    {
+        if (is_null($jwk)) {
+            return null;
+        }
+
+        return JWK::createFromJson(json_encode($jwk));
     }
 }

@@ -1,49 +1,44 @@
 <?php declare(strict_types=1);
 
 
-namespace Ridibooks\OAuth2\Authorization;
+namespace Ridibooks\InternalAuth\Authorization;
 
 
-use Ridibooks\OAuth2\Authorization\Exception\AuthorizationException;
-use Ridibooks\OAuth2\Authorization\Exception\InsufficientScopeException;
-use Ridibooks\OAuth2\Authorization\Exception\TokenNotFoundException;
-use Ridibooks\OAuth2\Authorization\Token\JwtToken;
-use Ridibooks\OAuth2\Authorization\Validator\JwtTokenValidator;
-use Ridibooks\OAuth2\Constant\AccessTokenConstant;
+use Ridibooks\InternalAuth\Authorization\Exception\AuthorizationException;
+use Ridibooks\InternalAuth\Authorization\Exception\NotAllowedIssuerException;
+use Ridibooks\InternalAuth\Authorization\Exception\TokenNotFoundException;
+use Ridibooks\InternalAuth\Authorization\Token\JwtToken;
+use Ridibooks\InternalAuth\Authorization\Validator\JwtValidator;
+use Ridibooks\InternalAuth\Constant\AccessTokenConstant;
 use Symfony\Component\HttpFoundation\Request;
 
 class Authorizer
 {
-    /** @var JwtTokenValidator */
+    /** @var JwtValidator */
     private $token_validator;
-    /** @var array */
-    private $default_scopes;
 
-    public function __construct(JwtTokenValidator $token_validator, array $default_scopes = [])
+    public function __construct(JwtValidator $token_validator)
     {
         $this->token_validator = $token_validator;
-        $this->default_scopes = $default_scopes;
     }
 
     /**
      * @param Request $request
-     * @param array $required_scopes
+     * @param array $allowed_issuer
      * @return JwtToken if the given request is authorized successfully
      * @throws AuthorizationException
      * @throws TokenNotFoundException if there is no access_token in the given request
-     * @throws InsufficientScopeException
+     * @throws NotAllowedIssuerException
      */
-    public function authorize(Request $request, array $required_scopes = []): JwtToken
+    public function authorize(Request $request, array $allowed_issuer): JwtToken
     {
-        $access_token = $request->cookies->get(AccessTokenConstant::ACCESS_TOKEN_COOKIE_KEY);
+        $internal_auth_token = $request->headers->get(AccessTokenConstant::AUTHORIZATION_HEADER_KEY);
         // 1. Validate access_token
-        $token = $this->token_validator->validateToken($access_token);
-        // 2. Check scope
-        if (empty($required_scopes)) {
-            $required_scopes = $this->default_scopes;
-        }
-        if (!empty($required_scopes) && !$token->hasScopes($required_scopes)) {
-            throw new InsufficientScopeException($required_scopes);
+        $token = $this->token_validator->validateToken($internal_auth_token);
+
+        // 2. Check Issuer
+        if (!empty($allowed_issuer) && !$token->isAllowed($allowed_issuer)) {
+            throw new NotAllowedIssuerException($allowed_issuer);
         }
 
         return $token;
