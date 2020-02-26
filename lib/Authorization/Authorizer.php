@@ -9,7 +9,7 @@ use Ridibooks\InternalAuth\Authorization\Exception\NotAllowedIssuerException;
 use Ridibooks\InternalAuth\Authorization\Exception\TokenNotFoundException;
 use Ridibooks\InternalAuth\Authorization\Token\JwtToken;
 use Ridibooks\InternalAuth\Authorization\Validator\JwtValidator;
-use Ridibooks\InternalAuth\Constant\AccessTokenConstant;
+use Ridibooks\InternalAuth\Constant\JwtConstant;
 use Symfony\Component\HttpFoundation\Request;
 
 class Authorizer
@@ -32,7 +32,7 @@ class Authorizer
      */
     public function authorize(Request $request, array $allowed_issuer): JwtToken
     {
-        $internal_auth_token = $request->headers->get(AccessTokenConstant::AUTHORIZATION_HEADER_KEY);
+        $internal_auth_token = $request->headers->get(JwtConstant::AUTHORIZATION_HEADER_KEY);
         // 1. Validate access_token
         $token = $this->token_validator->validateToken($internal_auth_token);
 
