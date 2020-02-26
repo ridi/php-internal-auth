@@ -14,5 +14,6 @@ update:
 	@composer update
 
 test:
-	@lib/Silex/vendor/bin/phpunit
+	@vendor/bin/phpunit
+# 	@lib/Silex/vendor/bin/phpunit
 # 	@lib/Symfony/vendor/bin/phpunit --bootstrap tests/Symfony/index.php tests/Symfony
