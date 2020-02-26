@@ -78,7 +78,7 @@ class JwtGenerator
         $jws = $this->jws_builder
             ->create()
             ->withPayload($payload)
-            ->addSignature($jwk, ['alg' => 'RS256'], ['kid' => $kid])
+            ->addSignature($jwk, ['typ' => 'JWT', 'kid' => $kid, 'alg' => 'RS256'])
             ->build();
 
         return $this->serializer->serialize($jws, 0);
