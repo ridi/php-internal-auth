@@ -24,7 +24,7 @@ composer require ridibooks/internal-auth
 
 ### `JwtGenerator`
 
-```
+```php
 use Ridibooks\InternalAuth\Authorization\Generator\JwtGenerator;
 
 $key_config = [
@@ -43,7 +43,7 @@ $token = $jwt_generator->generate(
 
 ### `Authorizer, JwtValidator Without Caching`
 
-```
+```php
 use Ridibooks\InternalAuth\Authorization\Validator\JwtValidator;
 use Ridibooks\InternalAuth\Authorizer;
 
