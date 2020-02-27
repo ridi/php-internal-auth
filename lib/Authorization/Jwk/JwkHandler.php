@@ -6,7 +6,7 @@ use Ridibooks\InternalAuth\Authorization\Exception\AccountServerException;
 use Ridibooks\InternalAuth\Authorization\Exception\ClientRequestException;
 use Ridibooks\InternalAuth\Authorization\Exception\InvalidJwtException;
 use Ridibooks\InternalAuth\Authorization\Exception\InvalidPublicKeyException;
-use Ridibooks\InternalAuth\Authorization\Exception\NotExistedKeyException;
+use Ridibooks\InternalAuth\Authorization\Exception\NotFoundPublicKeyException;
 use Ridibooks\InternalAuth\Constant\JwkConstant;
 use Jose\Component\Core\JWK;
 use Ridibooks\InternalAuth\Authorization\Api\JwkApi;
@@ -36,12 +36,12 @@ class JwkHandler
      * @param string $service_name
      * @param string $kid
      * @return JWK
-     * @throws InvalidJwtException
-     * @throws NotExistedKeyException
-     * @throws InvalidPublicKeyException
      * @throws AccountServerException
-     * @throws ClientRequestException
      * @throws CacheException
+     * @throws ClientRequestException
+     * @throws InvalidJwtException
+     * @throws InvalidPublicKeyException
+     * @throws NotFoundPublicKeyException
      */
     public function getJwk(
         string $service_name,
@@ -75,7 +75,7 @@ class JwkHandler
     /**
      * @param JWK $jwk
      * @return void
-     * @throws NotExistedKeyException
+     * @throws NotFoundPublicKeyException
      * @throws InvalidPublicKeyException
      */
     protected function assertValidKey(
@@ -83,7 +83,7 @@ class JwkHandler
     ): void
     {
         if (!$jwk) {
-            throw new NotExistedKeyException();
+            throw new NotFoundPublicKeyException();
         }
         if ($jwk->get('use') != JwkConstant::SIG) {
             throw new InvalidPublicKeyException();
@@ -95,9 +95,8 @@ class JwkHandler
      * @param string $kid
      * @return JWK
      * @throws AccountServerException
-     * @throws ClientRequestException
-     * @throws InvalidJwtException
      * @throws CacheException
+     * @throws ClientRequestException
      */
     protected function getJwkFromApiAndMemorizeJwks(
         string $service_name,

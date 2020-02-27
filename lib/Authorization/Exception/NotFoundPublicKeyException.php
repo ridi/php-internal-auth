@@ -2,6 +2,6 @@
 
 namespace Ridibooks\InternalAuth\Authorization\Exception;
 
-class NotExistedKeyException extends AuthorizationException
+class NotFoundPublicKeyException extends AuthorizationException
 {
 }

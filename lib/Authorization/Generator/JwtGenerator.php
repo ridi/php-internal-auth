@@ -10,6 +10,7 @@ use Jose\Component\Signature\Algorithm\ES256;
 use Jose\Component\Signature\Algorithm\RS256;
 use Jose\Component\Signature\JWSBuilder;
 use Jose\Component\Signature\Serializer\CompactSerializer;
+use Ridibooks\InternalAuth\Authorization\Exception\NotFoundIssuerException;
 use Ridibooks\InternalAuth\Constant\JwtConstant;
 
 class JwtGenerator
@@ -61,6 +62,7 @@ class JwtGenerator
      * @param string $audience
      * @param int $expires_in
      * @return string
+     * @throws NotFoundIssuerException
      */
     public function generate(
         string $issuer, string $audience, int $expires_in = JwtConstant::DEFAULT_JWT_EXPIRES_IN_SEC
@@ -71,6 +73,10 @@ class JwtGenerator
             'aud' => $audience,
             'exp' => time() + $expires_in
         ]);
+
+        if (!isset($this->key_info[$issuer])) {
+            throw new NotFoundIssuerException();
+        }
 
         $kid = $this->key_info[$issuer]['kid'];
         $jwk = $this->key_info[$issuer]['jwk'];

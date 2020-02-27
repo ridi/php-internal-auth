@@ -12,7 +12,70 @@
 - `PHP 7.2` or higher
 - `php7.2-gmp` web-token decryption 모듈을 위해서는 php7.2-gmp 를 os 내에 설치해줘야 합니다. 
 따라서 이 라이브러리 클라이언트들의 OS 혹은 도커 이미지 내에 꼭 설치해주시길 바랍니다. [참고 PR](https://github.com/ridibooks-docker/viewer-php/pull/1)
-- `silex/silex v1.3.x` (optional)
-- `symfony/symfony v4.x.x` (optional)
-- `guzzlehttp/guzzle` (optional)
 
+
+## Installation
+
+```
+composer require
+```
+
+## Usage
+
+### `JwtGenerator`
+
+```
+use Ridibooks\InternalAuth\Authorization\Generator\JwtGenerator;
+
+$key_config = [
+    '... issuer service name  ...' => [
+        'kid' => '... key id ...',
+        'key' => '... rsa private key ...',
+    ]
+];
+
+$jwt_generator = new JwtGenerator($key_config);
+$token = $jwt_generator->generate(
+    '... issuer service name  ...',
+    '... audience service name ...'
+)
+```
+
+### `Authorizer, JwtValidator Without Caching`
+
+```
+use Ridibooks\InternalAuth\Authorization\Validator\JwtValidator;
+use Ridibooks\InternalAuth\Authorizer;
+
+$internal_auth_token = '...';
+
+try {
+    $jwk_url = $this->configs['jwk_url'];
+    $validator = new JwtValidator($jwk_url);
+
+    $authorizer = new Authorizer($validator);
+    $authorizer->authorize($internal_auth_token, [InterService.Account]);
+} catch (AuthorizationException $e) {
+	// handle exception
+}
+```
+
+### `Authorizer, JwtValidator With Caching`
+
+```php
+use Ridibooks\InternalAuth\Authorization\Validator\JwtValidator;
+use Ridibooks\InternalAuth\Authorizer;
+
+$internal_auth_token = '...';
+
+try {
+    $jwk_url = $this->configs['jwk_url'];
+    $cache_item_pool = new FilesystemAdapter(); // [psr-6](https://www.php-fig.org/psr/psr-6/) Implementation Adaptor
+    $validator = new JwtValidator($jwk_url, $cache_item_pool);
+
+    $authorizer = new Authorizer($validator);
+    $authorizer->authorize($internal_auth_token, [InterService.Account]);
+} catch (AuthorizationException $e) {
+	// handle exception
+}
+```

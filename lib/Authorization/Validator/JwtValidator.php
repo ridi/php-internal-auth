@@ -4,13 +4,12 @@ namespace Ridibooks\InternalAuth\Authorization\Validator;
 
 use Psr\Cache\CacheException;
 use Ridibooks\InternalAuth\Authorization\Exception\AccountServerException;
-use Ridibooks\InternalAuth\Authorization\Exception\AuthorizationException;
 use Ridibooks\InternalAuth\Authorization\Exception\ClientRequestException;
 use Ridibooks\InternalAuth\Authorization\Exception\ExpiredTokenException;
 use Ridibooks\InternalAuth\Authorization\Exception\InvalidJwtException;
 use Ridibooks\InternalAuth\Authorization\Exception\InvalidJwtSignatureException;
 use Ridibooks\InternalAuth\Authorization\Exception\InvalidPublicKeyException;
-use Ridibooks\InternalAuth\Authorization\Exception\NotExistedKeyException;
+use Ridibooks\InternalAuth\Authorization\Exception\InvalidTokenException;
 use Ridibooks\InternalAuth\Authorization\Exception\TokenNotFoundException;
 use Ridibooks\InternalAuth\Authorization\Token\JwtToken;
 use Ridibooks\InternalAuth\Authorization\Jwk\JwkHandler;
@@ -155,14 +154,15 @@ class JwtValidator
     /**
      * @param string|null $internal_auth_token
      * @return JwtToken
-     * @throws AuthorizationException
-     * @throws TokenNotFoundException
-     * @throws InvalidJwtException
-     * @throws NotExistedKeyException
-     * @throws InvalidPublicKeyException
      * @throws AccountServerException
-     * @throws ClientRequestException
      * @throws CacheException
+     * @throws ClientRequestException
+     * @throws ExpiredTokenException
+     * @throws InvalidJwtException
+     * @throws InvalidJwtSignatureException
+     * @throws InvalidPublicKeyException
+     * @throws TokenNotFoundException
+     * @throws InvalidTokenException
      */
     public function validateToken($internal_auth_token): JwtToken
     {
