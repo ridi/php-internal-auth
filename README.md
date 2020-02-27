@@ -17,7 +17,7 @@
 ## Installation
 
 ```
-composer require
+composer require ridibooks/internal-auth
 ```
 
 ## Usage
